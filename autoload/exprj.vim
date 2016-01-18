@@ -51,16 +51,6 @@ let s:list_updated = 0
 
 " title
 let s:win_title = '-EXPRJ_LIST-'
-
-" winpos(topleft, botright)
-if !exists('g:exprj_list_win_pos')
-    let g:exprj_list_win_pos = 'botright'
-endif
-
-" winsize
-if !exists('g:exprj_list_win_size')
-    let g:exprj_list_win_size = 30
-endif
 "}}}
 
 function! exprj#load() abort "{{{
@@ -150,82 +140,7 @@ function! exprj#save() abort "{{{
     call s:savelist(s:cache_file, prj_list)
 endfunction "}}}
 
-" if open, close it; if close , open it
-function! exprj#toggle_window() abort "{{{
-    let result = exprj#close_window()
-    if 0 == result
-        call exprj#open_window()
-        call exprj#init_window()
-    endif
-endfunction "}}}
-
-function! exprj#close_window() abort "{{{
-    let winnr = bufwinnr(s:win_title)
-    if -1 != winnr
-        " jump to the window
-        exe winnr . 'wincmd w'
-        " if this is not the only window, close it
-        try
-            close
-        catch /E444:/
-            echo 'Can not close the last window!'
-        endtry
-
-        doautocmd BufEnter
-        return 1
-    endif
-
-    return 0
-endfunction "}}}
-
-function! exprj#open_window() abort "{{{
-    let winnr = bufwinnr(s:win_title)
-    if winnr == -1
-        " Make sure winpos and winsize
-        let winpos = g:exprj_list_win_pos
-        let winsize = g:exprj_list_win_size
-
-        " if the buffer already exists, reuse it
-        " Otherwise create a new buffer
-        let bufnum = bufnr(s:win_title)
-        let bufcmd = ''
-        if -1 == bufnum
-            let bufcmd = fnameescape(s:win_title)
-        else
-            let bufcmd = '+b' . bufnum
-        endif
-
-        " create window
-        silent exe winpos . ' ' . winsize . ' split ' . bufcmd
-    else
-        exe winnr . 'wincmd w'
-    endif
-
-    silent setlocal winfixheight
-    silent setlocal winfixwidth
-endfunction "}}}
-
-function! exprj#init_window() abort "{{{
-    " set project list context to windows
-    set filetype=exprjlist
-    augroup exprj
-        au! BufWinLeave <buffer> call <SID>on_close()
-    augroup END
-
-    if line('$') <= 1
-        silent call append(0, keys(s:prj_dict))
-    endif
-endfunction "}}}
-
-" commands{{{
-command! EXProjectList call exprj#toggle_window()
-"}}}
-
 " Private function{{{
-function! s:on_close() abort
-    echo 'Wait for add!'
-endfunction
-
 function! s:savelist(path, list) abort
     let path = fnamemodify(a:path, ':p')
     if !isdirectory(fnamemodify(path, ':h'))
